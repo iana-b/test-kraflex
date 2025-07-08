@@ -17,15 +17,20 @@ def get_page_data(page):
     url = (f"https://api.messefrankfurt.com/service/esb_api/exhibitor-service/api/2.1/public/exhibitor/"
            f"search?language=de-DE&q=&orderBy=name&pageNumber={page}&pageSize=30"
            f"&orSearchFallback=false&showJumpLabels=true&findEventVariable=EUROBIKE")
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    data = response.json()
-    return data
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"Сетевая ошибка на странице {page}: {e}")
+    return None
 
 
 def get_exhibitors_info():
     exhibitors = []
     data = get_page_data(1)
+    if data is None:
+        return exhibitors
     exhibitors.extend(parse_hits(data))
 
     total = data["result"]["metaData"]["hitsTotal"]
@@ -35,6 +40,8 @@ def get_exhibitors_info():
     for page in range(2, pages + 1):
         time.sleep(0.5)
         data = get_page_data(page)
+        if data is None:
+            continue
         exhibitors.extend(parse_hits(data))
 
     return exhibitors
@@ -68,3 +75,5 @@ create_table()
 participants = get_exhibitors_info()
 for p in participants:
     insert_participant(p)
+
+print(f"Всего добавлено в БД: {len(participants)} участников")
