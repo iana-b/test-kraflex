@@ -12,30 +12,29 @@ headers = {
 }
 
 
-def get_exhibitors_info():
-    exhibitors = []
+def get_page_data(page):
     url = (f"https://api.messefrankfurt.com/service/esb_api/exhibitor-service/api/2.1/public/exhibitor/"
-           f"search?language=de-DE&q=&orderBy=name&pageNumber=1&pageSize=30"
+           f"search?language=de-DE&q=&orderBy=name&pageNumber={page}&pageSize=30"
            f"&orSearchFallback=false&showJumpLabels=true&findEventVariable=EUROBIKE")
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     data = response.json()
+    return data
+
+
+def get_exhibitors_info():
+    exhibitors = []
+    data = get_page_data(1)
+    exhibitors.extend(parse_hits(data))
 
     total = data["result"]["metaData"]["hitsTotal"]
     per_page = data["result"]["metaData"]["hitsPerPage"]
     pages = (total // per_page) + (1 if total % per_page else 0)
 
-    exhibitors.extend(parse_hits(data))
-
     for page in range(2, pages + 1):
-        url = (f"https://api.messefrankfurt.com/service/esb_api/exhibitor-service/api/2.1/public/exhibitor/"
-               f"search?language=de-DE&q=&orderBy=name&pageNumber={page}&pageSize=30"
-               f"&orSearchFallback=false&showJumpLabels=true&findEventVariable=EUROBIKE")
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        exhibitors.extend(parse_hits(data))
         time.sleep(0.5)
+        data = get_page_data(page)
+        exhibitors.extend(parse_hits(data))
 
     return exhibitors
 
