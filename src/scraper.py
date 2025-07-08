@@ -14,11 +14,23 @@ headers = {
 
 
 def get_page_data(page):
-    url = (f"https://api.messefrankfurt.com/service/esb_api/exhibitor-service/api/2.1/public/exhibitor/"
-           f"search?language=de-DE&q=&orderBy=name&pageNumber={page}&pageSize=30"
-           f"&orSearchFallback=false&showJumpLabels=true&findEventVariable=EUROBIKE")
+    """
+    Sends a GET request to the event API for a specific page.
+    Returns JSON data with exhibitors.
+    """
+    url = "https://api.messefrankfurt.com/service/esb_api/exhibitor-service/api/2.1/public/exhibitor/search"
+    params = {
+        "language": "de-DE",
+        "q": "",
+        "orderBy": "name",
+        "pageNumber": page,
+        "pageSize": 30,
+        "orSearchFallback": "false",
+        "showJumpLabels": "true",
+        "findEventVariable": "EUROBIKE"
+    }
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, params=params, timeout=10)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -27,12 +39,17 @@ def get_page_data(page):
 
 
 def get_exhibitors_info():
+    """
+    Loads exhibitors data from all API pages.
+    Returns a list of dictionaries with company details.
+    """
     exhibitors = []
     data = get_page_data(1)
     if data is None:
         return exhibitors
     exhibitors.extend(parse_hits(data))
 
+    # Calculate the total number of pages based on metaData
     total = data["result"]["metaData"]["hitsTotal"]
     per_page = data["result"]["metaData"]["hitsPerPage"]
     pages = (total // per_page) + (1 if total % per_page else 0)
@@ -76,4 +93,4 @@ participants = get_exhibitors_info()
 for p in participants:
     insert_participant(p)
 
-print(f"Всего добавлено в БД: {len(participants)} участников")
+print(f"Total participants added to the database: {len(participants)}")
