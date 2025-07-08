@@ -1,6 +1,7 @@
 import os
 import requests
 import time
+from db import create_table, insert_participant
 from dotenv import load_dotenv
 from html import unescape
 
@@ -63,6 +64,7 @@ def parse_hits(data):
     return exhibitors
 
 
+create_table()
 participants = get_exhibitors_info()
 for p in participants:
-    print(p)
+    insert_participant(p)
