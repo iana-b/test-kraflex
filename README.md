@@ -17,6 +17,8 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 ## 🚀 Запуск
+Скопируйте .env.example в .env и вставьте API ключ
+
 Запустите скрипт
 ``` bash
 python scraper.py
